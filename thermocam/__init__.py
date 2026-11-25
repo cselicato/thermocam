@@ -20,4 +20,4 @@ THERMOCAM_DATA = THERMOCAM_OUT / 'data'
 if not Path.exists(THERMOCAM_DATA):
     Path.mkdir(THERMOCAM_DATA)
 
-MQTT_PATH = "/singlecameras/camera1/#"
+MQTT_PATH = "/singlecameras/camera2"

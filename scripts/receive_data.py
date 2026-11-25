@@ -9,12 +9,12 @@ import matplotlib.pyplot as plt
 import paho.mqtt.client as mqtt
 from loguru import logger
 
+from thermocam import MQTT_PATH
 from thermocam.handler import ThermoHandler
 from thermocam.callbacks import MQTTCallbacks
 
 
-# MQTT_SERVER = "test.mosquitto.org"
-MQTT_SERVER = "broker.emqx.io" # TODO: find a way to write server path in a config file
+MQTT_SERVER = "test.mosquitto.org" # TODO: find a way to write server path in a config file
                                # or something similar
 
 def level_filter(levels):
@@ -58,7 +58,7 @@ def main():
 
         handler.client = client
 
-        client.publish("/singlecameras/camera1/info_request", "1")
+        client.publish(f"{MQTT_PATH}/info_request", "1")
         time.sleep(0.5)
         client.loop_start()
         plt.show()

@@ -66,14 +66,14 @@ class GUICallbacks():
                 self.h.area.get_from_click(self.h.clicks)    # get defined area
                 self.h.figure.update_area(self.h.area)    #update drawn area
                 # publish the selected area
-                self.h.client.publish("/singlecameras/camera1/area", self.h.area.pub_area())
+                self.h.client.publish(f"{MQTT_PATH}/area", self.h.area.pub_area())
 
         else:
             # if area button is not clicked get point coordinates and publish them
             # if coordinates are already present, it does not append nor publish them
             if self.h.single_pixels.get_from_click(x, y):
                 # publish position of the last pixel
-                self.h.client.publish("/singlecameras/camera1/pixels/coord",
+                self.h.client.publish(f"{MQTT_PATH}/pixels/coord",
                                       self.h.single_pixels.new_pixel())
                 self.h.figure.update_pixels(self.h.single_pixels)
 
@@ -107,7 +107,7 @@ class GUICallbacks():
         event : Event
             Button press event
         """
-        self.h.client.publish("/singlecameras/camera1/pixels/reset", "1")
+        self.h.client.publish(f"{MQTT_PATH}/pixels/reset", "1")
 
     def reset_a_cb(self, event):
         """
@@ -118,7 +118,7 @@ class GUICallbacks():
         event : Event
             Button press event
         """
-        self.h.client.publish("/singlecameras/camera1/area/reset", "1")
+        self.h.client.publish(f"{MQTT_PATH}/area/reset", "1")
 
     def info_cb(self, event):
         """
@@ -132,7 +132,7 @@ class GUICallbacks():
         event : Event
             Button press event
         """
-        self.h.client.publish("/singlecameras/camera1/info_request", "1")
+        self.h.client.publish(f"{MQTT_PATH}/info_request", "1")
         logger.info("Sending request to AtomS3")
 
     def apply_set(self, event):
@@ -145,7 +145,7 @@ class GUICallbacks():
             Button press event
         """
         logger.info("Sending new settings to AtomS3")
-        self.h.client.publish("/singlecameras/camera1/settings", self.h.settings.publish_form())
+        self.h.client.publish(f"{MQTT_PATH}/settings", self.h.settings.publish_form())
 
     def reset_set(self, event):
         """
@@ -158,7 +158,7 @@ class GUICallbacks():
         """
         logger.info("Sending default settings to AtomS3")
         self.h.settings.default()
-        self.h.client.publish("/singlecameras/camera1/settings", self.h.settings.publish_form())
+        self.h.client.publish(f"{MQTT_PATH}/settings", self.h.settings.publish_form())
 
     # callbacks for textboxes on control panel
     def set_shift(self, expression):
@@ -257,7 +257,8 @@ class MQTTCallbacks():
         """
 
         logger.info(f"Connected with result code {reason_code}")
-        client.subscribe(MQTT_PATH)
+        client.subscribe(f"{MQTT_PATH}/#")
+        logger.info(f"subscribed to {MQTT_PATH}/#")
 
     def on_message(self, client, userdata, msg):
         """

@@ -6,6 +6,7 @@ import re
 import numpy as np
 from loguru import logger
 
+from thermocam import MQTT_PATH
 from thermocam import THERMOCAM_DATA
 from thermocam.videomaker import VideoMaker
 from thermocam.roi import InterestingArea, InterestingPixels
@@ -123,7 +124,7 @@ class ThermoHandler():
         if not msg.payload:
             logger.warning(f"Received empty message on topic {msg.topic}")
 
-        if msg.topic == "/singlecameras/camera1/settings/current":
+        if msg.topic == f"{MQTT_PATH}/settings/current":
             logger.info("Received camera settings")
             # get the current camera settings and display them on contol panel
             # they are received as rate: 8.00 shift: 8.00 emissivity: 0.95 mode: 1
@@ -151,17 +152,17 @@ class ThermoHandler():
 
         # an image is recieved from the sensor: plot the image and, if video
         # button is clicked, add frame to video
-        if msg.topic == "/singlecameras/camera1/image":
+        if msg.topic == f"{MQTT_PATH}/image":
             self.last_received = datetime.now()
             self.figure.update_image(msg)
             self.video.add_frame(self.figure, self.figure.img_dimensions())
 
-        if msg.topic == "/singlecameras/camera1/pixels/current":
+        if msg.topic == f"{MQTT_PATH}/pixels/current":
             # get pixels the camera is already looking at
             self.single_pixels.handle_mqtt(msg.payload.decode())
             self.figure.update_pixels(self.single_pixels)
 
-        if msg.topic == "/singlecameras/camera1/pixels/data":
+        if msg.topic == f"{MQTT_PATH}/pixels/data":
             self.single_pixels.update_data(msg.payload.decode(),
                                            self.figure.ax_pixels, self.start_time)
             self.figure.pix_text.set_text(f"Number of current pixels: {len(self.single_pixels.p)}")
@@ -169,12 +170,12 @@ class ThermoHandler():
             if self.save and self.f_pix:
                 self.f_pix.write(f"{datetime.now()},{self.single_pixels.out_data()}\n")
 
-        if msg.topic == "/singlecameras/camera1/area/current":
+        if msg.topic == f"{MQTT_PATH}/area/current":
             # get area the camera is already looking at
             self.area.handle_mqtt(msg.payload.decode())
             self.figure.update_area(self.area)
 
-        if msg.topic == "/singlecameras/camera1/area/data":
+        if msg.topic == f"{MQTT_PATH}/area/data":
             self.area.update_data(msg.payload.decode(), self.figure.ax_area, self.start_time)
             # NOTE: if current area (persistent message) is not received it does not work
             if self.area.defined(): # TODO: ugly

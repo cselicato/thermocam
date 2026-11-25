@@ -6,6 +6,7 @@ import argparse
 from loguru import logger
 import paho.mqtt.client as mqtt
 
+from thermocam import MQTT_PATH
 from thermocam.settings import CameraSettings
 
 
@@ -72,7 +73,7 @@ def main():
         client.connect(args.host, args.port, 60)
 
         # Publish message
-        result = client.publish("/singlecameras/camera1/settings", settings.publish_form())
+        result = client.publish(f"{MQTT_PATH}/settings", settings.publish_form())
         result.wait_for_publish()
 
         logger.info("Published")

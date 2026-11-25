@@ -1,6 +1,8 @@
 #include <M5Unified.h>
 #include <PubSubClient.h>
 #include <WiFi.h>
+#include <WiFiManager.h>
+#include <Preferences.h>
 #include <SPIFFS.h>
 #include <sstream>
 #include <vector>
@@ -8,11 +10,17 @@
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+Preferences prefs;
 
-const char* ssid        = "carmen";
-const char* password    = "password";
-const char* mqtt_server = "test.mosquitto.org";
-const char* client_name = "AtomS3ThermalCamera";
+// Configurable values loaded from NVS (Preferences)
+char cam_num[8]      = "1";
+char mqtt_server[64] = "test.mosquitto.org";
+
+// Built dynamically after WiFiManager finishes
+String base_topic  = "MQTT_PATH";
+String client_name = "AtomS3ThermalCamera_1";
+
+bool shouldSaveConfig = false;
 
 const char* pixel_fname = "/M5Stack/pixels.txt";
 const char* area_fname  = "/M5Stack/area.txt";
@@ -24,6 +32,27 @@ char msg[MSG_BUFFER_SIZE];
 String current_pix;
 String current_area;
 String current_settings;
+
+// Helper to build full MQTT topics cleanly
+String topicPath(const char* suffix) {
+    return base_topic + suffix;
+}
+
+// Called by WiFiManager when parameters or Wi-Fi credentials are saved
+void saveConfigCallback() {
+    shouldSaveConfig = true;
+}
+
+// Called by WiFiManager if it enters Access Point (setup) mode
+void configModeCallback(WiFiManager *myWiFiManager) {
+    M5.Display.fillScreen(TFT_BLACK);
+    M5.Display.setCursor(5, 5);
+    M5.Display.println("SETUP MODE");
+    M5.Display.println("Join WiFi:");
+    M5.Display.println(myWiFiManager->getConfigPortalSSID());
+    M5.Display.println("Open browser:");
+    M5.Display.println("192.168.4.1");
+}
 
 #include "MLX90640_API.h"
 #include "MLX90640_I2C_Driver_ATOMS3.h"
@@ -122,120 +151,113 @@ void callback(char* topic, byte* payload, unsigned int length) {
     Serial.print("Mqtt command:");
     Serial.println(message);
 
-    if(strcmp(topic, "/singlecameras/camera1/settings") == 0){
-        // write camera settings to file (previous one is overwritten)
-        File currentSet = SPIFFS.open(settings_fname,"w");
-        currentSet.printf(message.c_str());
-        currentSet.close();
-        client.publish("/singlecameras/camera1/settings/check", "received settings");
-        delay(200);
+    String t(topic);
 
+    if (t == topicPath("/settings")) {
+        // write camera settings to file (previous one is overwritten)
+        File currentSet = SPIFFS.open(settings_fname, "w");
+        if (currentSet) {
+            currentSet.print(message);
+            currentSet.close();
+        }
+        client.publish(topicPath("/settings/check").c_str(), "received settings");
+        delay(200);
         ESP.restart();
     }
-
-    if(strcmp(topic, "/singlecameras/camera1/info_request") == 0){
-        // publish settings, pixels and area
-        client.publish("/singlecameras/camera1/pixels/current", current_pix.c_str(), true);
-        client.publish("/singlecameras/camera1/area/current", current_area.c_str(), true);
-        client.publish("/singlecameras/camera1/settings/current", current_settings.c_str(), true);
+    else if (t == topicPath("/info_request")) {
+        client.publish(topicPath("/pixels/current").c_str(), current_pix.c_str(), true);
+        client.publish(topicPath("/area/current").c_str(), current_area.c_str(), true);
+        client.publish(topicPath("/settings/current").c_str(), current_settings.c_str(), true);
         Serial.println("Received request for info, sending:");
-        Serial.println(current_settings.c_str());
-        Serial.println(current_area.c_str());
-        Serial.println(current_pix.c_str());
+        Serial.println(current_settings);
+        Serial.println(current_area);
+        Serial.println(current_pix);
     }
-    
-
-    if(strcmp(topic, "/singlecameras/camera1/pixels/coord") == 0){
+    else if (t == topicPath("/pixels/coord")) {
         // get x and y coordinate of the desired pixel and add them to single_pixels
         std::vector<int> coord;
-        std::stringstream ss = std::stringstream(message.c_str());
+        std::stringstream ss(message.c_str());
         int f;
-        for (int i=0; i<2;i++){
+        for (int i = 0; i < 2; i++) {
             ss >> f;
             single_pixel[i] = f;
             coord.push_back(f);
         }
         // check if values are valid and do stuff only if they are
-        if (coord.at(0)>=ROWS || coord.at(1)>=COLS){
+        if (coord.at(0) >= ROWS || coord.at(1) >= COLS) {
             Serial.println("Received coordinates are invalid :(");
-        }
-        else {        
+        } else {
             single_pixels.push_back(coord);
 
             // add pixel to file
-            File dataFile = SPIFFS.open(pixel_fname,"a");
+            File dataFile = SPIFFS.open(pixel_fname, "a");
             if (dataFile) {
                 dataFile.printf("%d %d\n", coord.at(0), coord.at(1));
                 dataFile.close();
-                client.publish("/singlecameras/camera1/pixel_file","success");
+                client.publish(topicPath("/pixel_file").c_str(), "success");
             } else {
-                client.publish("/singlecameras/camera1/pixel_file","failed");
+                client.publish(topicPath("/pixel_file").c_str(), "failed");
             }
 
             std::ostringstream oss;
-            for (int i=0; i<single_pixels.size(); i++){
+            for (size_t i = 0; i < single_pixels.size(); i++) {
                 std::vector<int> pair = single_pixels[i];
-                if (pair.size() == 2){
-                    oss << pair[0]<<' '<<pair[1];
+                if (pair.size() == 2) {
+                    oss << pair[0] << ' ' << pair[1];
+                } else {
+                    Serial.println("Found invalid coordinates in single_pixels vector");
                 }
-                else {
-                    Serial.println("Found invalid coordinates in single_pixels vector (dimensions !=2) :(");
+                if (i != single_pixels.size() - 1) {
+                    oss << ",";
                 }
-                if (i!=single_pixels.size()-1){
-                    oss << ",";}
             }
 
             current_pix = oss.str().c_str();
-            client.publish("/singlecameras/camera1/pixels/current", current_pix.c_str(), true);
+            client.publish(topicPath("/pixels/current").c_str(), current_pix.c_str(), true);
         }
     }
-
-    else if(strcmp(topic, "/singlecameras/camera1/pixels/reset") == 0){
+    else if (t == topicPath("/pixels/reset")) {
         reset_pixels = true;
     }
-
-    else if(strcmp(topic, "/singlecameras/camera1/area") == 0){  // get information about the area
+    else if (t == topicPath("/area")) {  // get information about the area
         // first two numbers are coord. of the lower left point
         // last two are width and height
 
         // put received info in a temporary container
         int rc[4];
-        std::stringstream ss = std::stringstream(message.c_str());
+        std::stringstream ss(message.c_str());
         int f;
-        for (int i=0; i<4;i++){
+        for (int i = 0; i < 4; i++) {
             ss >> f;
             rc[i] = f;
         }
         // check if values are valid
-        bool invalid = rc[0]>=ROWS || rc[1]>=COLS || rc[0]+rc[2]>ROWS || rc[1]+rc[3]>COLS;
-        if (invalid){ // values are invalid
+        bool invalid = rc[0] >= ROWS || rc[1] >= COLS || rc[0] + rc[2] > ROWS || rc[1] + rc[3] > COLS;
+        if (invalid) {
             Serial.println("Received area is invalid :(");
             Serial.println("If area was defined before, still sending its data");
-        }
-        else { // values are valid: define new area and do stuff
+        } else { // values are valid: define new area and do stuff
             area.clear();
-            for (int i=0; i<4;i++){
+            for (int i = 0; i < 4; i++) {
                 area.push_back(rc[i]);
             }
             // publish current area as persistent message
             current_area = message;
-            client.publish("/singlecameras/camera1/area/current", current_area.c_str(), true);
+            client.publish(topicPath("/area/current").c_str(), current_area.c_str(), true);
             // write area to file (previous one must be overwritten)
-            File currentArea = SPIFFS.open(area_fname,"w");
+            File currentArea = SPIFFS.open(area_fname, "w");
             if (currentArea) {
                 currentArea.printf("%d\n%d\n%d\n%d\n", area[0], area[1], area[2], area[3]);
-
                 currentArea.close();
-                client.publish("/singlecameras/camera1/area_file","success");
+                client.publish(topicPath("/area_file").c_str(), "success");
             } else {
-                client.publish("/singlecameras/camera1/area_file","failed");
+                client.publish(topicPath("/area_file").c_str(), "failed");
             }
         }
     }
-
-    else if(strcmp(topic, "/singlecameras/camera1/area/reset") == 0){
+    else if (t == topicPath("/area/reset")) {
         reset_area = true;
-    }
+    }    
 }
 
 // connects or reconnects to MQTT
@@ -245,23 +267,20 @@ void reconnect(){
     M5.Display.fillScreen(TFT_BLACK);
     M5.Display.setCursor(5, 5);
     M5.Display.printf("Connecting to MQTT...");
-    if (client.connect(client_name)) {
-    client.subscribe("/singlecameras/camera1/settings");
-    client.subscribe("/singlecameras/camera1/info_request");
-    client.subscribe("/singlecameras/camera1/area");
-    client.subscribe("/singlecameras/camera1/area/reset");
-    client.subscribe("/singlecameras/camera1/pixels/coord");
-    client.subscribe("/singlecameras/camera1/pixels/reset");
+    if (client.connect(client_name.c_str())) {
+        client.subscribe(topicPath("/settings").c_str());
+        client.subscribe(topicPath("/info_request").c_str());
+        client.subscribe(topicPath("/area").c_str());
+        client.subscribe(topicPath("/area/reset").c_str());
+        client.subscribe(topicPath("/pixels/coord").c_str());
+        client.subscribe(topicPath("/pixels/reset").c_str());
 
-    M5.Display.printf("Connected and subscribed");
-    delay(500);
-
+        M5.Display.printf("Connected and subscribed");
+        delay(500);
     } 
     else {
-    M5.Display.printf("Failed MQTT connection, rc=");
-    M5.Display.print(client.state());
-    M5.Display.printf(", wait 2 s");
-    delay(2000);
+    M5.Display.printf("Failed MQTT connection, rc=%d\nWait 2s", client.state());
+        delay(2000);
     }
 }
 
@@ -295,10 +314,86 @@ void setup() {
         M5.Display.println("SPIFFS format finish");
     }
 
-    // Connect to wifi
-    M5.Display.print("\nConnecting WiFi...\n");
-    WiFi.mode(WIFI_STA);    // option specifies client only
-    WiFi.begin(ssid, password);
+    // load saved camera number and MQTT broker from NVS
+    prefs.begin("cam-config", false);
+    String savedCam  = prefs.getString("cam_num", "1");
+    String savedMqtt = prefs.getString("mqtt_srv", "test.mosquitto.org");
+    savedCam.toCharArray(cam_num, sizeof(cam_num));
+    savedMqtt.toCharArray(mqtt_server, sizeof(mqtt_server));
+
+    // check if user holds the AtomS3 screen button during boot to force setup portal
+    M5.Display.println("Hold btn for setup...");
+    bool forcePortal = false;
+    unsigned long btnWait = millis() + 1500;
+    while (millis() < btnWait) {
+        M5.update();
+        if (M5.BtnA.isPressed()) {
+            forcePortal = true;
+            break;
+        }
+        delay(50);
+    }
+
+    // configure WiFiManager with custom fields
+    WiFi.mode(WIFI_STA);
+    WiFiManager wm;
+    wm.setAPCallback(configModeCallback);
+    wm.setSaveConfigCallback(saveConfigCallback);
+    wm.setSaveParamsCallback(saveConfigCallback);
+
+    WiFiManagerParameter custom_cam_num("cam_num", "Camera Number (e.g. 1, 2, 3)", cam_num, sizeof(cam_num));
+    WiFiManagerParameter custom_mqtt_srv("mqtt_srv", "MQTT Server", mqtt_server, sizeof(mqtt_server));
+    wm.addParameter(&custom_cam_num);
+    wm.addParameter(&custom_mqtt_srv);
+
+    bool connected = false;
+    if (forcePortal) {
+        // opens portal immediately without wiping existing Wi-Fi unless you change it
+        connected = wm.startConfigPortal("AtomS3-Cam-Setup");
+    } else {
+        // Connects to saved Wi-Fi, or opens portal if unreachable
+        connected = wm.autoConnect("AtomS3-Cam-Setup");
+    }
+
+    if (!connected) {
+        M5.Display.println("WiFi failed, rebooting");
+        delay(2000);
+        ESP.restart();
+    }
+
+    // save updated custom parameters to NVS if changed in the portal
+    if (shouldSaveConfig) {
+        String newCam = String(custom_cam_num.getValue());
+        newCam.trim();
+        if (newCam.length() > 0) {
+            newCam.toCharArray(cam_num, sizeof(cam_num));
+            prefs.putString("cam_num", cam_num);
+        }
+
+        String newMqtt = String(custom_mqtt_srv.getValue());
+        newMqtt.trim();
+        if (newMqtt.length() > 0) {
+            newMqtt.toCharArray(mqtt_server, sizeof(mqtt_server));
+            prefs.putString("mqtt_srv", mqtt_server);
+        }
+    }
+    prefs.end();
+
+    // build final topic prefix and unique MQTT client ID
+    base_topic  = "/singlecameras/camera" + String(cam_num);
+    client_name = "AtomS3ThermalCamera_" + String(cam_num);
+
+    M5.Display.fillScreen(TFT_BLACK);
+    M5.Display.setCursor(5, 5);
+    M5.Display.printf("WiFi OK!\nCam #%s\n", cam_num);
+
+    // build final topic prefix and unique MQTT client ID
+    base_topic  = "/singlecameras/camera" + String(cam_num);
+    client_name = "AtomS3ThermalCamera_" + String(cam_num);
+
+    M5.Display.fillScreen(TFT_BLACK);
+    M5.Display.setCursor(5, 5);
+    M5.Display.printf("WiFi OK!\nCam #%s\n", cam_num);
 
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
@@ -306,7 +401,7 @@ void setup() {
     }
     M5.Display.printf("\nConnected!\n");
 
-    // Configure MQTT 
+    // configure MQTT 
     client.setServer(mqtt_server, 1883);    // default unencrypted MQTT port is 1883
     client.setCallback(callback); 
     client.setBufferSize(256+4*768);
@@ -320,7 +415,7 @@ void setup() {
         File file_set = SPIFFS.open(settings_fname,"w");  // Create file object to write information
         file_set.printf("%d\n%.1f\n%.2f\n%d\n", rate_setting, TA_SHIFT, emissivity, readout_mode);
         file_set.close();
-        client.publish("/singlecameras/camera1/settings/check", "Creating empty file");
+        client.publish(topicPath("/settings/check").c_str(), "Creating empty file");
 
     }
     else { // read file line by line
@@ -345,8 +440,8 @@ void setup() {
                  " emissivity: " + String(emissivity) +
                  " mode: " + String(readout_mode);
         Serial.println(current_settings);
-        client.publish("/singlecameras/camera1/settings/current", current_settings.c_str(), true);        
-        client.publish("/singlecameras/camera1/settings/check", "end of parsing setting file");
+        client.publish(topicPath("/settings/current").c_str(), current_settings.c_str(), true);        
+        client.publish(topicPath("/settings/check").c_str(), "end of parsing setting file");
     }
 
 
@@ -462,7 +557,7 @@ void loop() {
     loopTime = millis();
     startTime = loopTime;
     
-    client.publish("/singlecameras/camera1/pixels/connected", "1");
+    client.publish(topicPath("/pixels/connected").c_str(), "1");
 
     // Long press button for power off (hold for 3 seconds)
     if (M5.BtnA.pressedFor(3000)) {
@@ -480,7 +575,7 @@ void loop() {
         File emptyFile = SPIFFS.open(pixel_fname,"w");  // Create aFile object to write information
         emptyFile.close();  // Close the file when writing is complete.
         current_pix = "none";
-        client.publish("/singlecameras/camera1/pixels/current", current_pix.c_str(), true);
+        client.publish(topicPath("/pixels/current").c_str(), current_pix.c_str(), true);
     }
 
     if (reset_area){
@@ -489,7 +584,7 @@ void loop() {
         File emptyFile = SPIFFS.open(area_fname,"w");  // Create aFile object to write information
         emptyFile.close();  // Close the file when writing is complete.
         current_area = "none";
-        client.publish("/singlecameras/camera1/area/current", current_area.c_str(), true);
+        client.publish(topicPath("/area/current").c_str(), current_area.c_str(), true);
     }
     
     // Read thermal data
@@ -603,18 +698,18 @@ void loop() {
     M5.Display.printf("fps:%d", (int)fps);
     
     // MQTT publishing
-    client.connect(client_name);
-    bool r = client.publish("/singlecameras/camera1/image", (byte *) pixels, 4*768); 
-    client.publish("/singlecameras/camera1/check", r?"ok":"ko");
+    client.connect(client_name.c_str());
+    bool r = client.publish(topicPath("/image").c_str(), (byte *) pixels, 4*768); 
+    client.publish(topicPath("/check").c_str(), r?"ok":"ko");
     String jsonPayload = String("{\"tmax\":") + String(max_v) + ",\"tmin\":" + String(min_v) + ",\"tavg\":" + String(avg_v) + "}";
-    client.publish("/singlecameras/camera1/temps", jsonPayload.c_str());
+    client.publish(topicPath("/temps").c_str(), jsonPayload.c_str());
     // if at least one pixel is defined, publish pixel data
     if (single_pixels.size()>0){
-        client.publish("/singlecameras/camera1/pixels/data", pixel_data(single_pixels,pixels).c_str());
+        client.publish(topicPath("/pixels/data").c_str(), pixel_data(single_pixels,pixels).c_str());
     }
     // if area is defined, publish its data
     if(area.size() == 4){    // if area is not defined there is nothing to publish
-        client.publish("/singlecameras/camera1/area/data", area_data(area,pixels).c_str());
+        client.publish(topicPath("/area/data").c_str(), area_data(area,pixels).c_str());
     }
 
 }

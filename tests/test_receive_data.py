@@ -10,8 +10,9 @@ import numpy as np
 import paho.mqtt.client as mqtt
 from loguru import logger
 
-# MQTT_SERVER = "test.mosquitto.org"
-MQTT_SERVER = "broker.emqx.io"
+from thermocam import MQTT_PATH
+
+MQTT_SERVER = "test.mosquitto.org"
 
 class DummyCamera:
     """
@@ -25,12 +26,12 @@ class DummyCamera:
     def pixel_data(self):
         """ Publish pixel data
         """
-        self.client.publish("/singlecameras/camera1/pixels/data", "1 2 3.00,4 5 6.00")
+        self.client.publish("MQTT_PATH/pixels/data", "1 2 3.00,4 5 6.00")
 
     def area_data(self):
         """ Publish area data
         """
-        self.client.publish("/singlecameras/camera1/area/data",
+        self.client.publish("MQTT_PATH/area/data",
                             "max: 10 min: 9 avg: 8 x: 7 y: 6 w: 5 h: 4")
 
     def image(self):
@@ -40,12 +41,12 @@ class DummyCamera:
         values = np.random.rand((32*24))*30
         values = np.float32(values)
         img = values.tobytes()
-        self.client.publish("/singlecameras/camera1/image", img)
+        self.client.publish("MQTT_PATH/image", img)
 
     def empty(self):
         """Publish empty message
         """
-        self.client.publish("/singlecameras/camera1/image", "")
+        self.client.publish("MQTT_PATH/image", "")
 
 
 def manual_test_loop():
