@@ -9,13 +9,9 @@ import matplotlib.pyplot as plt
 import paho.mqtt.client as mqtt
 from loguru import logger
 
-from thermocam import MQTT_PATH
+from thermocam.config import MQTT_SERVER, MQTT_PORT, MQTT_PATH
 from thermocam.handler import ThermoHandler
 from thermocam.callbacks import MQTTCallbacks
-
-
-MQTT_SERVER = "test.mosquitto.org" # TODO: find a way to write server path in a config file
-                               # or something similar
 
 def level_filter(levels):
     """
@@ -41,8 +37,8 @@ def main():
     logger.add(sys.stderr, filter=level_filter(["WARNING", "ERROR", "INFO"]))
 
     parser = argparse.ArgumentParser(description="Receive data from thermal camera")
-    parser.add_argument("--save", default="y",choices=["y", "n"], help="Save output txt files with"
-                        "pixels data and area data")
+    parser.add_argument("--save", default="n",choices=["y", "n"], help="Save output txt files with "
+                        "pixels data and area data. Default is n.")
 
     args = parser.parse_args()
     save = True if args.save == "y" else False
@@ -54,7 +50,7 @@ def main():
         client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
         client.on_connect = mqtt_cbs.on_connect
         client.on_message = mqtt_cbs.on_message
-        client.connect(MQTT_SERVER, 1883, 60)
+        client.connect(MQTT_SERVER, MQTT_PORT, 60)
 
         handler.client = client
 

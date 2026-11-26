@@ -5,7 +5,7 @@ Callbacks module for GUI interaction and MQTT message handling
 import numpy as np
 from loguru import logger
 
-from thermocam import MQTT_PATH
+from thermocam.config import MQTT_PATH
 
 
 class GUICallbacks():

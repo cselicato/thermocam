@@ -6,7 +6,7 @@ import argparse
 from loguru import logger
 import paho.mqtt.client as mqtt
 
-from thermocam import MQTT_PATH
+from thermocam.config import MQTT_SERVER, MQTT_PORT, MQTT_PATH
 from thermocam.settings import CameraSettings
 
 
@@ -40,12 +40,9 @@ def main():
     Parse settings from command line and publish them to the MQTT server
     """
 
-    parser = argparse.ArgumentParser(description="Send thermal camera MLX90640 setting"
-                                        "to AtomS3 from the command line")
-
-    parser.add_argument("--host", default="test.mosquitto.org", help="MQTT broker hostname "
-                        "(default: test.mosquitto.org)")
-    parser.add_argument("--port", type=int, default=1883, help="MQTT broker port (default: 1883)")
+    parser = argparse.ArgumentParser(description="Send thermal camera MLX90640 setting "
+                                        "to AtomS3 from the command line. MQTT server and "
+                                        "port can be configured in the config.toml file.")
 
     parser.add_argument("--rate", type=float,choices=[0.5, 1, 2, 4, 8], default=2., help="Thermal "
                         "camera refresh rate in Hz (default is 2 Hz)")
@@ -70,7 +67,7 @@ def main():
     logger.info("Connecting to MQTT server")
     try:
         client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-        client.connect(args.host, args.port, 60)
+        client.connect(MQTT_SERVER, MQTT_PORT, 60)
 
         # Publish message
         result = client.publish(f"{MQTT_PATH}/settings", settings.publish_form())

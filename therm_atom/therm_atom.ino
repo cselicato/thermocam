@@ -15,9 +15,10 @@ Preferences prefs;
 // Configurable values loaded from NVS (Preferences)
 char cam_num[8]      = "1";
 char mqtt_server[64] = "test.mosquitto.org";
+char mqtt_port[8]    = "1883";
 
 // Built dynamically after WiFiManager finishes
-String base_topic  = "MQTT_PATH";
+String base_topic  = "/singlecameras/camera1";
 String client_name = "AtomS3ThermalCamera_1";
 
 bool shouldSaveConfig = false;
@@ -318,8 +319,10 @@ void setup() {
     prefs.begin("cam-config", false);
     String savedCam  = prefs.getString("cam_num", "1");
     String savedMqtt = prefs.getString("mqtt_srv", "test.mosquitto.org");
+    String savedPort = prefs.getString("mqtt_port", "1883");
     savedCam.toCharArray(cam_num, sizeof(cam_num));
     savedMqtt.toCharArray(mqtt_server, sizeof(mqtt_server));
+    savedPort.toCharArray(mqtt_port, sizeof(mqtt_port));
 
     // check if user holds the AtomS3 screen button during boot to force setup portal
     M5.Display.println("Hold btn for setup...");
@@ -343,8 +346,10 @@ void setup() {
 
     WiFiManagerParameter custom_cam_num("cam_num", "Camera Number (e.g. 1, 2, 3)", cam_num, sizeof(cam_num));
     WiFiManagerParameter custom_mqtt_srv("mqtt_srv", "MQTT Server", mqtt_server, sizeof(mqtt_server));
+    WiFiManagerParameter custom_mqtt_port("mqtt_port", "MQTT Port", mqtt_port, 5);
     wm.addParameter(&custom_cam_num);
     wm.addParameter(&custom_mqtt_srv);
+    wm.addParameter(&custom_mqtt_port);
 
     bool connected = false;
     if (forcePortal) {
@@ -376,6 +381,13 @@ void setup() {
             newMqtt.toCharArray(mqtt_server, sizeof(mqtt_server));
             prefs.putString("mqtt_srv", mqtt_server);
         }
+        String newPort = String(custom_mqtt_port.getValue());
+        newPort.trim();
+        int parsedPort = newPort.toInt();
+        if (parsedPort > 0 && parsedPort <= 65535) {
+            newPort.toCharArray(mqtt_port, sizeof(mqtt_port));
+            prefs.putString("mqtt_port", mqtt_port);
+        }
     }
     prefs.end();
 
@@ -402,7 +414,11 @@ void setup() {
     M5.Display.printf("\nConnected!\n");
 
     // configure MQTT 
-    client.setServer(mqtt_server, 1883);    // default unencrypted MQTT port is 1883
+    int port = atoi(mqtt_port);
+    if (port <= 0 || port > 65535) {
+        port = 1883;    // default unencrypted MQTT port is 1883
+    }
+    client.setServer(mqtt_server, port);
     client.setCallback(callback); 
     client.setBufferSize(256+4*768);
     delay(1000);    // wait 1 s

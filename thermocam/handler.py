@@ -6,7 +6,7 @@ import re
 import numpy as np
 from loguru import logger
 
-from thermocam import MQTT_PATH
+from thermocam.config import MQTT_PATH
 from thermocam import THERMOCAM_DATA
 from thermocam.videomaker import VideoMaker
 from thermocam.roi import InterestingArea, InterestingPixels
