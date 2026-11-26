@@ -6,7 +6,8 @@
     function setColorMode(t){let e=document.documentElement;e.setAttribute("data-color-mode",t);let a=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches,s=t;"auto"===t&&(s=a?"dark":"light"),"light"===s?(e.classList.remove("dark"),e.classList.add("light")):(e.classList.remove("light"),e.classList.add("dark"))}
     setColorMode(localStorage._theme||"auto");
   </script><link rel="stylesheet" type="text/css" href="_static/pygments.css?v=e1a1ceaf" />
-    <link rel="stylesheet" type="text/css" href="_static/shibuya.css?v=14737038" />
+    <link rel="stylesheet" type="text/css" href="_static/shibuya.css?v=2ceb65ce" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx_autodoc_typehints.css?v=057ac668" />
     <link media="print" rel="stylesheet" type="text/css" href="_static/print.css?v=20ff2c19" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,8 +91,6 @@ data-aria-dark="Switch to auto color mode">
 </li>
       <li><a href="thermocam.html#thermocam.videomaker.VideoMaker.add_frame">add_frame() (thermocam.videomaker.VideoMaker method)</a>
 </li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.apply_set">apply_set() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.apply_settings">apply_settings (thermocam.settings.ControlPanel attribute)</a>
 </li>
       <li><a href="thermocam.html#thermocam.visualization.Display.area_button">area_button (thermocam.visualization.Display attribute)</a>
@@ -118,8 +117,6 @@ data-aria-dark="Switch to auto color mode">
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.handler.ThermoHandler.close_files">close_files() (thermocam.handler.ThermoHandler method)</a>
-</li>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel">ControlPanel (class in thermocam.settings)</a>
 </li>
   </ul></td>
@@ -182,27 +179,21 @@ data-aria-dark="Switch to auto color mode">
         <li><a href="thermocam.html#thermocam.roi.InterestingPixels.get_from_click">(thermocam.roi.InterestingPixels method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#thermocam.roi.InterestingArea.get_from_str">get_from_str() (thermocam.roi.InterestingArea method)</a>
 
       <ul>
         <li><a href="thermocam.html#thermocam.roi.InterestingPixels.get_from_str">(thermocam.roi.InterestingPixels method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.get_info">get_info (thermocam.settings.ControlPanel attribute)</a>
-</li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks">GUICallbacks (class in thermocam.callbacks)</a>
 </li>
   </ul></td>
 </tr></table>
 
 <h2 id="H">H</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.handler.ThermoHandler.handle_message">handle_message() (thermocam.handler.ThermoHandler method)</a>
-</li>
-  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#thermocam.roi.InterestingArea.handle_mqtt">handle_mqtt() (thermocam.roi.InterestingArea method)</a>
 
@@ -222,8 +213,6 @@ data-aria-dark="Switch to auto color mode">
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.info_cb">info_cb() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
       <li><a href="thermocam.html#thermocam.roi.InterestingArea">InterestingArea (class in thermocam.roi)</a>
 </li>
       <li><a href="thermocam.html#thermocam.roi.InterestingPixels">InterestingPixels (class in thermocam.roi)</a>
@@ -240,8 +229,6 @@ data-aria-dark="Switch to auto color mode">
         <li><a href="thermocam.html#id2">(thermocam.settings.CameraSettings property)</a>
 </li>
       </ul></li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.mode_changed">mode_changed() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.mode_selector">mode_selector (thermocam.settings.ControlPanel attribute)</a>
 </li>
       <li>
@@ -249,10 +236,6 @@ data-aria-dark="Switch to auto color mode">
 
       <ul>
         <li><a href="thermocam.html#module-thermocam">thermocam</a>
-</li>
-        <li><a href="thermocam.html#module-thermocam.callbacks">thermocam.callbacks</a>
-</li>
-        <li><a href="thermocam.html#module-thermocam.handler">thermocam.handler</a>
 </li>
         <li><a href="thermocam.html#module-thermocam.roi">thermocam.roi</a>
 </li>
@@ -263,10 +246,6 @@ data-aria-dark="Switch to auto color mode">
         <li><a href="thermocam.html#module-thermocam.visualization">thermocam.visualization</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.callbacks.MQTTCallbacks">MQTTCallbacks (class in thermocam.callbacks)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -283,16 +262,10 @@ data-aria-dark="Switch to auto color mode">
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#id6">offline() (thermocam.settings.ControlPanel method)</a>, <a href="thermocam.html#thermocam.settings.ControlPanel.offline">[1]</a>
 </li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.on_click">on_click() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
-      <li><a href="thermocam.html#thermocam.callbacks.MQTTCallbacks.on_connect">on_connect() (thermocam.callbacks.MQTTCallbacks method)</a>
+      <li><a href="thermocam.html#id7">online() (thermocam.settings.ControlPanel method)</a>, <a href="thermocam.html#thermocam.settings.ControlPanel.online">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.callbacks.MQTTCallbacks.on_message">on_message() (thermocam.callbacks.MQTTCallbacks method)</a>
-</li>
-      <li><a href="thermocam.html#id7">online() (thermocam.settings.ControlPanel method)</a>, <a href="thermocam.html#thermocam.settings.ControlPanel.online">[1]</a>
-</li>
       <li><a href="thermocam.html#thermocam.roi.InterestingArea.out_data">out_data() (thermocam.roi.InterestingArea method)</a>
 
       <ul>
@@ -329,17 +302,11 @@ data-aria-dark="Switch to auto color mode">
         <li><a href="thermocam.html#id4">(thermocam.settings.CameraSettings property)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.rate_selector">rate_selector (thermocam.settings.ControlPanel attribute)</a>
 </li>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.rate_text">rate_text (thermocam.settings.ControlPanel attribute)</a>
-</li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.reset_a_cb">reset_a_cb() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.reset_px_cb">reset_px_cb() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.reset_set">reset_set() (thermocam.callbacks.GUICallbacks method)</a>
 </li>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.reset_settings">reset_settings (thermocam.settings.ControlPanel attribute)</a>
 </li>
@@ -349,22 +316,16 @@ data-aria-dark="Switch to auto color mode">
 <h2 id="S">S</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.set_em">set_em() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.set_rate">set_rate() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.set_shift">set_shift() (thermocam.callbacks.GUICallbacks method)</a>
-</li>
       <li><a href="thermocam.html#thermocam.settings.CameraSettings.shift">shift (thermocam.settings.CameraSettings attribute)</a>
 
       <ul>
         <li><a href="thermocam.html#id5">(thermocam.settings.CameraSettings property)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.shift_box">shift_box (thermocam.settings.ControlPanel attribute)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#thermocam.settings.ControlPanel.shift_text">shift_text (thermocam.settings.ControlPanel attribute)</a>
 </li>
       <li><a href="thermocam.html#thermocam.videomaker.VideoMaker.size">size (thermocam.videomaker.VideoMaker attribute)</a>
@@ -387,28 +348,12 @@ data-aria-dark="Switch to auto color mode">
 </li>
       </ul></li>
       <li>
-    thermocam.callbacks
-
-      <ul>
-        <li><a href="thermocam.html#module-thermocam.callbacks">module</a>
-</li>
-      </ul></li>
-      <li>
-    thermocam.handler
-
-      <ul>
-        <li><a href="thermocam.html#module-thermocam.handler">module</a>
-</li>
-      </ul></li>
-      <li>
     thermocam.roi
 
       <ul>
         <li><a href="thermocam.html#module-thermocam.roi">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     thermocam.settings
 
@@ -416,6 +361,8 @@ data-aria-dark="Switch to auto color mode">
         <li><a href="thermocam.html#module-thermocam.settings">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     thermocam.videomaker
 
@@ -430,8 +377,6 @@ data-aria-dark="Switch to auto color mode">
         <li><a href="thermocam.html#module-thermocam.visualization">module</a>
 </li>
       </ul></li>
-      <li><a href="thermocam.html#thermocam.handler.ThermoHandler">ThermoHandler (class in thermocam.handler)</a>
-</li>
       <li><a href="thermocam.html#thermocam.visualization.Display.time_text">time_text (thermocam.visualization.Display attribute)</a>
 </li>
   </ul></td>
@@ -456,8 +401,6 @@ data-aria-dark="Switch to auto color mode">
 </li>
       <li><a href="thermocam.html#thermocam.visualization.Display.update_pixels">update_pixels() (thermocam.visualization.Display method)</a>
 </li>
-      <li><a href="thermocam.html#thermocam.handler.ThermoHandler.update_status">update_status() (thermocam.handler.ThermoHandler method)</a>
-</li>
   </ul></td>
 </tr></table>
 
@@ -466,11 +409,9 @@ data-aria-dark="Switch to auto color mode">
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="thermocam.html#thermocam.videomaker.VideoMaker.video">video (thermocam.videomaker.VideoMaker attribute)</a>
 </li>
-      <li><a href="thermocam.html#thermocam.visualization.Display.video_button">video_button (thermocam.visualization.Display attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="thermocam.html#thermocam.callbacks.GUICallbacks.video_button_cb">video_button_cb() (thermocam.callbacks.GUICallbacks method)</a>
+      <li><a href="thermocam.html#thermocam.visualization.Display.video_button">video_button (thermocam.visualization.Display attribute)</a>
 </li>
       <li><a href="thermocam.html#thermocam.videomaker.VideoMaker">VideoMaker (class in thermocam.videomaker)</a>
 </li>
@@ -500,7 +441,7 @@ data-aria-dark="Switch to auto color mode">
   </div>
 </footer>
       <script src="_static/documentation_options.js?v=f2a433a1"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script src="_static/shibuya.js?v=c1cf1a6b"></script></body>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/shibuya.js?v=50760d75"></script></body>
 </html>
